@@ -45,6 +45,7 @@ from sglang.srt.utils import (
     ceil_div,
     dispose_tensor,
     get_bool_env_var,
+    is_cuda,
     is_hip,
     is_npu,
 )

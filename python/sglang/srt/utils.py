@@ -200,16 +200,6 @@ def support_triton(backend: str) -> bool:
     return backend not in ["torch_native", "intel_amx", "ascend"]
 
 
-try:
-    import sgl_kernel
-
-    is_intel_amx_backend_available = hasattr(
-        torch.ops.sgl_kernel, "convert_weight_packed"
-    )
-except:
-    is_intel_amx_backend_available = False
-
-
 def cpu_has_amx_support():
     return torch._C._cpu._is_amx_tile_supported() and is_intel_amx_backend_available
 
@@ -2544,6 +2534,20 @@ def bind_or_assign(target, source):
         return target
     else:
         return source
+
+
+def support_triton(attn_backend: str) -> bool:
+    return attn_backend not in ["torch_native", "intel_amx", "npumla"]
+
+
+try:
+    import sgl_kernel
+
+    is_intel_amx_backend_available = hasattr(
+        torch.ops.sgl_kernel, "convert_weight_packed"
+    )
+except:
+    is_intel_amx_backend_available = False
 
 
 def prepack_weight_if_needed(weight):
