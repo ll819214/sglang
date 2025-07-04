@@ -382,7 +382,7 @@ class W8A8Int8LinearMethod(LinearMethodBase):
                 x.dtype,
                 True,  # is_vnni
             )
-
+        
         if _is_npu:
             x_q, x_scale = torch_npu.npu_dynamic_quant(x)
             out = torch_npu.npu_quant_matmul(
