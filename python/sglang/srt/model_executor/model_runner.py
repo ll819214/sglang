@@ -322,14 +322,6 @@ class ModelRunner:
             self.cuda_graph_runner = None
             self.cuda_graph_mem_usage = 0
             self.init_attention_backend()
-            self.enable_dynamo_compile = True
-            if self.enable_dynamo_compile:
-                self.model = torch.compile(
-                    self.model,
-                    dynamic=True,
-                    backend=get_compiler_backend(),
-                    fullgraph=True,
-                )
 
         # auxiliary hidden capture mode. TODO: expose this to server args?
         if self.spec_algorithm.is_eagle3() and not self.is_draft_worker:

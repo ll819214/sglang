@@ -70,36 +70,6 @@ def npu_wrapper_rmsnorm_init(func):
 
     return init
 
-
-# func refers to RMSNorm.forward_oot
-def npu_wrapper_rmsnorm_forward(func):
-    def _rmsnorm_forward_oot(
-        self,
-        x: torch.Tensor,
-        residual: Optional[torch.Tensor] = None,
-    ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
-        if not x.is_contiguous():
-            x = x.contiguous()
-        original_dtype = x.dtype
-        x = x.to(torch.float32)
-        if residual is not None:
-            x = x + residual.to(torch.float32)
-            residual = x.to(original_dtype)
-
-        x = (
-            torch_npu.npu_rms_norm(
-                x, self.weight.to(torch.float32), self.variance_epsilon
-            )[0]
-            + self.bias
-        )
-
-        if residual is None:
-            return x.to(original_dtype)
-        return x.to(original_dtype), residual
-
-    return _rmsnorm_forward_oot
-
-
 def npu_fused_experts(
     hidden_states: torch.Tensor,
     w13: torch.Tensor,
@@ -189,7 +159,7 @@ class W8A8Int8Config(QuantizationConfig):
     def __init__(self, quant_config: Dict[str, Any] = {}):
         super().__init__()
         self.quant_description = quant_config
-        self.is_dynamic = quant_config.get("is_dynamic", False)
+        self.is_dynamic = (quant_config.get("is_dynamic", False) or quant_config.get("model_quant_type", "STATIC") == "W8A8_DYNAMIC")
         ignore = cast(List[str], quant_config.get("ignore", []))
         self.ignore = ignore if ignore is not None else []
         packed_modules_mapping = quant_config.get("packed_modules_mapping", {})
@@ -198,6 +168,8 @@ class W8A8Int8Config(QuantizationConfig):
         )
 
         if _is_npu:
+            if self.is_dynamic:
+                return 
             # Ascend w8a8_int8 quantization with bias, use wrappers to isolate the effects between models
             for name in self.quant_description.keys():
                 if "norm.bias" in name:
@@ -205,11 +177,6 @@ class W8A8Int8Config(QuantizationConfig):
                         "sglang.srt.layers.layernorm.RMSNorm",
                         "__init__",
                         [npu_wrapper_rmsnorm_init],
-                    )
-                    apply_module_patch(
-                        "sglang.srt.layers.layernorm.RMSNorm",
-                        "forward_npu",
-                        [npu_wrapper_rmsnorm_forward],
                     )
 
     @classmethod

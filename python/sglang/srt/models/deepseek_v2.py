@@ -637,18 +637,18 @@ class DeepseekV2MoE(nn.Module):
             self, hidden_states: torch.Tensor, forward_batch: ForwardBatch
     ) -> torch.Tensor:
         pad_size = None
-        if forward_batch.forward_mode.is_extend():
+        forward_mode = forward_batch.forward_mode
+        if forward_mode.is_extend():
             pad_size = (forward_batch.seq_lens_sum // get_attention_tp_size() + 1) - hidden_states.size(0)
         else:
             pad_size = (forward_batch.batch_size // get_attention_tp_size() + 1) - hidden_states.size(0)
         hidden_states = F.pad(hidden_states, [0, 0, 0, pad_size], "constant", 0)
-        forward_mode = forward_batch.forward_mode
         shared_output = None
         if is_non_idle_and_non_empty(forward_mode, hidden_states):
             # router_logits: (num_tokens, n_experts)
             router_logits = self.gate(hidden_states)
             shared_output = self._forward_shared_experts(hidden_states)
-            topk_weights, topk_idx = select_experts(
+            topk_weights, topk_idx, _ = select_experts(
                 hidden_states=hidden_states,
                 router_logits=router_logits,
                 top_k=self.top_k,
@@ -692,7 +692,7 @@ class DeepseekV2MoE(nn.Module):
                 hidden_states=hidden_states,
                 topk_idx=topk_idx,
                 topk_weights=topk_weights,
-                forward_mode=forward_mode,
+                forward_batch=forward_batch,
             )
         final_hidden_states = self.experts(
             hidden_states=hidden_states,
@@ -704,7 +704,7 @@ class DeepseekV2MoE(nn.Module):
                 hidden_states=final_hidden_states,
                 topk_idx=topk_idx,
                 topk_weights=topk_weights,
-                forward_mode=forward_mode,
+                forward_batch=forward_batch,
                 topk_ids=topk_ids,
                 ep_send_counts=ep_recv_counts,
                 tp_send_counts=tp_recv_counts,
@@ -926,7 +926,7 @@ class DeepseekV2AttentionMLA(nn.Module):
             self.kv_lora_rank,
             self.num_heads * (self.qk_nope_head_dim + self.v_head_dim),
             bias=False,
-            quant_config=None,
+            quant_config=None if _is_npu else quant_config, # NPU not support quantization method for kv_b_proj
             prefix=add_prefix("kv_b_proj", prefix),
             tp_rank=attn_tp_rank,
             tp_size=attn_tp_size,
@@ -2609,8 +2609,8 @@ class DeepseekV2ForCausalLM(nn.Module):
                 if "rotary_emb.inv_freq" in name:
                     continue
                 if "weight_offset" in name:
-                    raise ValueError(f"weight_offset in {name}")
-                    continue
+                    if _is_npu: # NPU not support for weight_offset now.
+                        continue
 
                 for param_name, weight_name, shard_id in stacked_params_mapping:
                     # Skip non-stacked layers and experts (experts handled below).

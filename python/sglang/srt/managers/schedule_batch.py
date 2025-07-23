@@ -1937,7 +1937,7 @@ def get_last_loc(
     prefix_lens_tensor: torch.Tensor,
 ) -> torch.Tensor:
     if (
-        global_server_args_dict["attention_backend"] != "ascend"
+        global_server_args_dict["attention_backend"] not in ["ascend", "npumla"]
         and global_server_args_dict["attention_backend"] != "torch_native"
     ):
         impl = get_last_loc_triton

@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Callable
 
 import torch
 
@@ -8,6 +8,7 @@ from sglang.srt.distributed import (
     get_tensor_model_parallel_world_size,
 )
 from sglang.srt.eplb.expert_location import get_global_expert_location_metadata
+from sglang.srt.custom_op import CustomOp
 from sglang.srt.layers.moe.ep_moe.kernels import (
     ep_gather,
     ep_scatter,
@@ -38,6 +39,7 @@ from sglang.srt.layers.quantization.fp8_kernel import (
 )
 from sglang.srt.layers.quantization.unquant import UnquantizedEPMoEMethod
 from sglang.srt.layers.quantization.w4afp8 import W4AFp8Config, W4AFp8MoEMethod
+from sglang.srt.layers.quantization.w8a8_int8 import W8A8Int8MoEMethod
 from sglang.srt.managers.schedule_batch import global_server_args_dict
 from sglang.srt.model_executor.forward_batch_info import ForwardBatch
 from sglang.srt.utils import (
@@ -1368,7 +1370,6 @@ class NpuDeepEPMoE(DeepEPMoE):
         intermediate_size: int,
         layer_id: int,
         params_dtype: Optional[torch.dtype] = None,
-        renormalize: bool = True,
         use_grouped_topk: bool = False,
         num_expert_group: Optional[int] = None,
         num_fused_shared_experts: int = 0,
@@ -1389,16 +1390,9 @@ class NpuDeepEPMoE(DeepEPMoE):
             intermediate_size=intermediate_size,
             layer_id=layer_id,
             params_dtype=params_dtype,
-            renormalize=renormalize,
-            use_grouped_topk=use_grouped_topk,
-            num_expert_group=num_expert_group,
-            num_fused_shared_experts=num_fused_shared_experts,
-            topk_group=topk_group,
             quant_config=quant_config,
             tp_size=tp_size,
             prefix=prefix,
-            correction_bias=correction_bias,
-            custom_routing_function=custom_routing_function,
             activation=activation,
             routed_scaling_factor=routed_scaling_factor,
             deepep_mode=deepep_mode,

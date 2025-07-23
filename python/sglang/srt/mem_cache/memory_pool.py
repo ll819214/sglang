@@ -44,7 +44,9 @@ logger = logging.getLogger(__name__)
 GB = 1024 * 1024 * 1024
 _is_cuda = is_cuda()
 _is_npu = is_npu()
-if not _is_npu:
+if _is_npu:
+    import torch_npu
+else:
     from sgl_kernel.kvcacheio import transfer_kv_per_layer, transfer_kv_per_layer_mla
 
 
@@ -685,8 +687,6 @@ class AscendTokenToKVPool(MHATokenToKVPool):
             cache_k = cache_k.view(self.store_dtype)
             cache_v = cache_v.view(self.store_dtype)
 
-        import torch_npu
-
         torch_npu._npu_reshape_and_cache(
             key=cache_k,
             value=cache_v,
@@ -1064,8 +1064,6 @@ class AscendMLAPagedTokenToKVPool(MLATokenToKVPool):
 
         if self.store_dtype != self.dtype:
             cache_k = cache_k.view(store_dtype)
-
-        import torch_npu
 
         torch_npu._npu_reshape_and_cache_siso(
             key=cache_k.view(-1, 1, self.kv_lora_rank + self.qk_rope_head_dim),

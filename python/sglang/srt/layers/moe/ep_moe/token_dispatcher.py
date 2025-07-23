@@ -795,11 +795,11 @@ class NpuDeepEPDispatcher:
         hidden_states: torch.Tensor,
         topk_idx: torch.Tensor,
         topk_weights: torch.Tensor,
-        forward_mode: ForwardMode
+        forward_batch: ForwardBatch,
     ) -> Tuple:
         hidden_states = hidden_states.view(-1, hidden_states.shape[-1])
         topk_ids = topk_idx.to(torch.int)
-        if forward_mode.is_extend():
+        if forward_batch.is_extend_in_batch:
             return self.dispatch_prefill(hidden_states, topk_ids)
         else:
             return self.dispatch_decode(hidden_states, topk_ids)
@@ -875,7 +875,7 @@ class NpuDeepEPDispatcher:
         hidden_states: torch.Tensor,
         topk_idx: torch.Tensor,
         topk_weights: torch.Tensor,
-        forward_mode: ForwardMode,
+        forward_batch: ForwardBatch,
         topk_ids: torch.Tensor,
         shared_output: torch.Tensor,
         ep_send_counts,
@@ -883,7 +883,7 @@ class NpuDeepEPDispatcher:
         expanded_x,
         expanded_row_idx
     ) -> Tuple:
-        if forward_mode.is_extend():
+        if forward_batch.is_extend_in_batch:
             input_splits = ep_send_counts
             output_splits = tp_send_counts
             return self.combine_prefill(hidden_states, topk_ids, topk_idx, topk_weights, input_splits, output_splits,
