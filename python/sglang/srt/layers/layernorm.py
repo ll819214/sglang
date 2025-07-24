@@ -84,8 +84,8 @@ class RMSNorm(CustomOp):
         x: torch.Tensor,
         residual: Optional[torch.Tensor] = None,
     ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
-        if hasattr(self, 'ignore_anti'):
-            '''if w8a8_int8 weights requares adding bias in rmsnorm'''
+        if hasattr(self, "ignore_anti"):
+            """if w8a8_int8 weights requares adding bias in rmsnorm"""
             if not x.is_contiguous():
                 x = x.contiguous()
             original_dtype = x.dtype

@@ -56,9 +56,13 @@ from sglang.srt.layers.linear import (
     RowParallelLinear,
 )
 from sglang.srt.layers.logits_processor import LogitsProcessor
-from sglang.srt.layers.moe.ep_moe.layer import DeepEPMoE, get_moe_impl_class, NpuDeepEPMoE
+from sglang.srt.layers.moe.ep_moe.layer import (
+    DeepEPMoE,
+    NpuDeepEPMoE,
+    get_moe_impl_class,
+)
 from sglang.srt.layers.moe.ep_moe.token_dispatcher import DeepEPDispatcher
-from sglang.srt.layers.moe.topk import TopK, select_experts, npu_topk
+from sglang.srt.layers.moe.topk import TopK, npu_topk, select_experts
 from sglang.srt.layers.quantization import deep_gemm_wrapper
 from sglang.srt.layers.quantization.base_config import QuantizationConfig
 from sglang.srt.layers.quantization.fp8_kernel import (
@@ -104,7 +108,6 @@ from sglang.srt.utils import (
     is_cuda,
     is_flashinfer_available,
     is_hip,
-    is_npu,
     is_non_idle_and_non_empty,
     is_npu,
     log_info_on_rank0,
@@ -634,14 +637,18 @@ class DeepseekV2MoE(nn.Module):
         return final_hidden_states
 
     def forward_deepep_npu(
-            self, hidden_states: torch.Tensor, forward_batch: ForwardBatch
+        self, hidden_states: torch.Tensor, forward_batch: ForwardBatch
     ) -> torch.Tensor:
         pad_size = None
         forward_mode = forward_batch.forward_mode
         if forward_mode.is_extend():
-            pad_size = (forward_batch.seq_lens_sum // get_attention_tp_size() + 1) - hidden_states.size(0)
+            pad_size = (
+                forward_batch.seq_lens_sum // get_attention_tp_size() + 1
+            ) - hidden_states.size(0)
         else:
-            pad_size = (forward_batch.batch_size // get_attention_tp_size() + 1) - hidden_states.size(0)
+            pad_size = (
+                forward_batch.batch_size // get_attention_tp_size() + 1
+            ) - hidden_states.size(0)
         hidden_states = F.pad(hidden_states, [0, 0, 0, pad_size], "constant", 0)
         shared_output = None
         if is_non_idle_and_non_empty(forward_mode, hidden_states):
@@ -663,8 +670,8 @@ class DeepseekV2MoE(nn.Module):
                 expert_location_dispatch_info=ExpertLocationDispatchInfo.init_new(
                     layer_id=self.layer_id,
                 ),
-                custom_routing_function=npu_topk, # npu customized top_k function
-                n_routed_experts=self.n_routed_experts
+                custom_routing_function=npu_topk,  # npu customized top_k function
+                n_routed_experts=self.n_routed_experts,
             )
         else:
             topk_idx = torch.full(
@@ -926,7 +933,9 @@ class DeepseekV2AttentionMLA(nn.Module):
             self.kv_lora_rank,
             self.num_heads * (self.qk_nope_head_dim + self.v_head_dim),
             bias=False,
-            quant_config=None if _is_npu else quant_config, # NPU not support quantization method for kv_b_proj
+            quant_config=(
+                None if _is_npu else quant_config
+            ),  # NPU not support quantization method for kv_b_proj
             prefix=add_prefix("kv_b_proj", prefix),
             tp_rank=attn_tp_rank,
             tp_size=attn_tp_size,
@@ -2609,7 +2618,7 @@ class DeepseekV2ForCausalLM(nn.Module):
                 if "rotary_emb.inv_freq" in name:
                     continue
                 if "weight_offset" in name:
-                    if _is_npu: # NPU not support for weight_offset now.
+                    if _is_npu:  # NPU not support for weight_offset now.
                         continue
 
                 for param_name, weight_name, shard_id in stacked_params_mapping:

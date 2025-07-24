@@ -1709,8 +1709,9 @@ def get_compiler_backend() -> str:
         try:
             import torchair
             import torchair.ge_concrete_graph.ge_converter.experimental.patch_for_hcom_allreduce
-            from torchair.configs.compiler_config import CompilerConfig
             from torchair import patch_for_hcom
+            from torchair.configs.compiler_config import CompilerConfig
+
             patch_for_hcom()
         except ImportError as e:
             raise ImportError(

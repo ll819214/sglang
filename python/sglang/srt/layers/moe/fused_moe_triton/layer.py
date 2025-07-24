@@ -34,6 +34,7 @@ class FusedMoeWeightScaleSupported(Enum):
     GROUP = "group"
     BLOCK = "block"
 
+
 class FusedMoE(torch.nn.Module):
     """FusedMoE layer for MoE models.
 

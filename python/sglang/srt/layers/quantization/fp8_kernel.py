@@ -31,9 +31,9 @@ from sglang.srt.utils import (
     get_device_core_count,
     get_device_name,
     is_cpu,
-    is_npu,
     is_cuda,
     is_hip,
+    is_npu,
     log_info_on_rank0,
     supports_custom_op,
 )

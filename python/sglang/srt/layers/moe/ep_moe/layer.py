@@ -1,14 +1,14 @@
 import logging
-from typing import List, Optional, Tuple, Callable
+from typing import Callable, List, Optional, Tuple
 
 import torch
 
+from sglang.srt.custom_op import CustomOp
 from sglang.srt.distributed import (
     get_tensor_model_parallel_rank,
     get_tensor_model_parallel_world_size,
 )
 from sglang.srt.eplb.expert_location import get_global_expert_location_metadata
-from sglang.srt.custom_op import CustomOp
 from sglang.srt.layers.moe.ep_moe.kernels import (
     ep_gather,
     ep_scatter,
@@ -155,25 +155,28 @@ class GroupedGemmRunner(CustomOp):
         scale_a: torch.Tensor = None,
         scale_b: torch.Tensor = None,
         expert_tokens=None,
-        n_routed_experts_per_rank=0
+        n_routed_experts_per_rank=0,
     ):
         world_size = get_tensor_model_parallel_world_size()
         if world_size > 1 and n_routed_experts_per_rank >= 1:
-            mm1_mm3 = torch_npu.npu_grouped_matmul([a], [b],
-                                                   group_list=expert_tokens,
-                                                   split_item=3,
-                                                   group_type=0,
-                                                   scale=[scale_b] if scale_b is not None else None,
-                                                   per_token_scale=[scale_a] if scale_a is not None else None,
-                                                   output_dtype=c_dtype,
-                                                   tuning_config=[0],
-                                                   group_list_type=1,
-                                                   )[0]
+            mm1_mm3 = torch_npu.npu_grouped_matmul(
+                [a],
+                [b],
+                group_list=expert_tokens,
+                split_item=3,
+                group_type=0,
+                scale=[scale_b] if scale_b is not None else None,
+                per_token_scale=[scale_a] if scale_a is not None else None,
+                output_dtype=c_dtype,
+                tuning_config=[0],
+                group_list_type=1,
+            )[0]
         else:
             mm1_mm3 = torch.matmul(a, b)
         return mm1_mm3
 
     forward_cuda = forward_native
+
 
 class EPMoE(torch.nn.Module):
     """
@@ -239,7 +242,9 @@ class EPMoE(torch.nn.Module):
             self.w2_weight_scale = None
             self.activation_scheme = quant_config.moe_activation_scheme
         elif _is_npu:
-            self.quant_method: Optional[QuantizeMethodBase] = W8A8Int8MoEMethod(quant_config)
+            self.quant_method: Optional[QuantizeMethodBase] = W8A8Int8MoEMethod(
+                quant_config
+            )
             self.use_fp8_w8a8 = False
             self.use_block_quant = False
             self.block_shape = None
@@ -270,9 +275,7 @@ class EPMoE(torch.nn.Module):
             kwargs["num_experts"] = self.num_experts_per_partition
         else:
             kwargs["num_experts_per_partition"] = self.num_experts_per_partition
-        self.quant_method.create_weights(
-            **kwargs
-        )
+        self.quant_method.create_weights(**kwargs)
 
         self.grouped_gemm_runner = None
 
@@ -1361,6 +1364,7 @@ class DeepEPMoE(EPMoE):
 
         return down_output
 
+
 class NpuDeepEPMoE(DeepEPMoE):
     def __init__(
         self,
@@ -1401,23 +1405,25 @@ class NpuDeepEPMoE(DeepEPMoE):
         self.n_routed_experts_per_rank = n_routed_experts // self.tp_size
 
         self.grouped_gemm_runner = GroupedGemmRunner(
-            "npu", use_flashinfer=False,
+            "npu",
+            use_flashinfer=False,
         )
 
         self.quant_scale = torch.nn.Parameter(
-            torch.ones(size=(self.n_routed_experts_per_rank, self.w2_weight.size(-1)),
-                       dtype=torch.float)
-        ) # smooth scale, now dpsk use smooth_scale == 1
+            torch.ones(
+                size=(self.n_routed_experts_per_rank, self.w2_weight.size(-1)),
+                dtype=torch.float,
+            )
+        )  # smooth scale, now dpsk use smooth_scale == 1
 
         assert self.quant_method is not None
-
 
     def forward(
         self,
         hidden_states: torch.Tensor,
         expert_tokens=None,
         dynamic_scale=None,
-        **kwargs
+        **kwargs,
     ):
         hidden_size = hidden_states.size(-1)
 
@@ -1434,7 +1440,7 @@ class NpuDeepEPMoE(DeepEPMoE):
             scale_a=None,
             scale_b=None,
             n_routed_experts_per_rank=self.n_routed_experts_per_rank,
-            expert_tokens=expert_tokens
+            expert_tokens=expert_tokens,
         )
 
         if self.activation == "silu":
@@ -1466,7 +1472,7 @@ class NpuDeepEPMoE(DeepEPMoE):
             scale_a=dynamic_scale,
             scale_b=self.w2_weight_scale.squeeze(-1).to(torch.bfloat16),
             n_routed_experts_per_rank=self.n_routed_experts_per_rank,
-            expert_tokens=expert_tokens
+            expert_tokens=expert_tokens,
         )
         return down_output
 

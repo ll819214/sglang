@@ -70,6 +70,7 @@ def npu_wrapper_rmsnorm_init(func):
 
     return init
 
+
 def npu_fused_experts(
     hidden_states: torch.Tensor,
     w13: torch.Tensor,
@@ -145,6 +146,7 @@ def npu_fused_experts(
         final_hidden_states = final_hidden_states.view(original_shape)
     return final_hidden_states
 
+
 if _is_npu:
     import torch_npu
 
@@ -159,7 +161,10 @@ class W8A8Int8Config(QuantizationConfig):
     def __init__(self, quant_config: Dict[str, Any] = {}):
         super().__init__()
         self.quant_description = quant_config
-        self.is_dynamic = (quant_config.get("is_dynamic", False) or quant_config.get("model_quant_type", "STATIC") == "W8A8_DYNAMIC")
+        self.is_dynamic = (
+            quant_config.get("is_dynamic", False)
+            or quant_config.get("model_quant_type", "STATIC") == "W8A8_DYNAMIC"
+        )
         ignore = cast(List[str], quant_config.get("ignore", []))
         self.ignore = ignore if ignore is not None else []
         packed_modules_mapping = quant_config.get("packed_modules_mapping", {})
@@ -169,7 +174,7 @@ class W8A8Int8Config(QuantizationConfig):
 
         if _is_npu:
             if self.is_dynamic:
-                return 
+                return
             # Ascend w8a8_int8 quantization with bias, use wrappers to isolate the effects between models
             for name in self.quant_description.keys():
                 if "norm.bias" in name:
@@ -349,7 +354,7 @@ class W8A8Int8LinearMethod(LinearMethodBase):
                 x.dtype,
                 True,  # is_vnni
             )
-        
+
         if _is_npu:
             x_q, x_scale = torch_npu.npu_dynamic_quant(x)
             out = torch_npu.npu_quant_matmul(
@@ -371,6 +376,7 @@ class W8A8Int8LinearMethod(LinearMethodBase):
                 bias=bias,
             )
         return out
+
 
 class W8A8Int8MoEMethod(FusedMoEMethodBase):
     """MoE method for INT8.
