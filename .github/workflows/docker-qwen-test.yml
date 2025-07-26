@@ -15,7 +15,7 @@ on:
       - "test/**"
 jobs:
   unit-test-basic:
-    runs-on: qwen_test-10
+    runs-on: NpuTestRunner0
     container:
       image: swr.cn-southwest-2.myhuaweicloud.com/base_image/ascend-ci/cann:8.2.rc1.alpha003-910b-ubuntu22.04-py3.11
     steps:
@@ -39,7 +39,7 @@ jobs:
   finish:
     if: always()
     needs: [ unit-test-basic ]
-    runs-on: arm64-npu-0
+    runs-on: NpuTestRunner0
     steps:
       - name: Check all dependent job statuses
         run: |
