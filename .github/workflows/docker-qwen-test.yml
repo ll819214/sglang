@@ -2,13 +2,13 @@ name: PR TEST SIMPLE VERSION (NPU)
 
 on:
   push:
-    branches: [ "test_ci" ]
+    branches: [ "main" ]
     path:
       - "python/**"
       - "scripts/**"
       - "test/**"
   pull_request:
-    branches: [ "test_ci" ]
+    branches: [ "main" ]
     paths:
       - "python/**"
       - "scripts/**"
@@ -29,7 +29,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: 'test_ci'
+          ref: 'main'
       - name: Install dependencies
         run: |
           bash scripts/npu_ci_install_dependency.sh
