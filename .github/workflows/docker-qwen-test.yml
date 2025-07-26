@@ -26,6 +26,10 @@ jobs:
           cp ./hosts /etc/hosts
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: 'test_ci'
       - name: Install dependencies
         run: |
           bash scripts/npu_ci_install_dependency.sh
