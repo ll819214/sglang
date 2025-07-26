@@ -25,6 +25,7 @@ jobs:
           sed -i '$a 140.82.112.3                  github/.com' ./hosts
           cp ./hosts /etc/hosts
           cat /etc/hosts
+          timeout 10s ping github.com
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Install dependencies
