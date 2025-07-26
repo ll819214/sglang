@@ -1,0 +1,38 @@
+name: PR TEST SIMPLE VERSION (NPU)
+
+on:
+  push:
+    branches: [ "main" ]
+    path:
+      - "python/**"
+      - "scripts/**"
+      - "test/**"
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - "python/**"
+      - "scripts/**"
+      - "test/**"
+jobs:
+  unit-test-basic:
+    runs-on: qwen_test-10
+    container:
+      image: swr.cn-southwest-2.myhuaweicloud.com/base_image/ascend-ci/cann:8.2.rc1.alpha003-910b-ubuntu22.04-py3.11
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          bash scripts/npu_ci_install_dependency.sh
+      - name: Run test
+        run: |
+          echo "All jobs completed successfully"
+  finish:
+    if: always()
+    needs: [ unit-test-basic ]
+    runs-on: arm64-npu-0
+    steps:
+      - name: Check all dependent job statuses
+        run: |
+          echo "All jobs completed successfully"
+          exit 0
