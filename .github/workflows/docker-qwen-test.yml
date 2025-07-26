@@ -2,13 +2,13 @@ name: PR TEST SIMPLE VERSION (NPU)
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "test_ci" ]
     path:
       - "python/**"
       - "scripts/**"
       - "test/**"
   pull_request:
-    branches: [ "main" ]
+    branches: [ "test_ci" ]
     paths:
       - "python/**"
       - "scripts/**"
@@ -19,6 +19,11 @@ jobs:
     container:
       image: swr.cn-southwest-2.myhuaweicloud.com/base_image/ascend-ci/cann:8.2.rc1.alpha003-910b-ubuntu22.04-py3.11
     steps:
+      - name: dns avoid
+        run: |
+          cp /etc/hosts ./
+          sed -i '$a 140.82.112.3                  github/.com' ./hosts
+          cp ./hosts /etc/hosts
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Install dependencies
