@@ -25,6 +25,9 @@ jobs:
           sed -i '$a 140.82.112.3                  github/.com' ./hosts
           cp ./hosts /etc/hosts
           cat /etc/hosts
+          git clone https://github.com/ll819214/sglang.git
+          ll ./sglang
+          echo "Git clone successfully"
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Install dependencies
