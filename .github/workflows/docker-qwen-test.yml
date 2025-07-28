@@ -76,9 +76,10 @@ jobs:
         uses: actions/checkout@v4
       - name: Install dependencies
         run: |
+          sleep 10000000
           bash scripts/npu_ci_install_dependency.sh
           echo "npu_ci_install_dependency installed successfully"
-          bash /home/l00623338/pkg/Ascend-cann-toolkit_9.2.RC1*.run --install
+          bash /home/l00623338/pkg/Ascend-cann-toolkit_8.2.RC1*.run --install
           bash /home/l00623338/pkg/Ascend-cann-kernels-*.run --install
           source /usr/local/Ascend/ascend-toolkit/set_env.sh
           echo "pkg installed successfully"
