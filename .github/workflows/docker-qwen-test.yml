@@ -7,12 +7,14 @@ on:
       - "python/**"
       - "scripts/**"
       - "test/**"
+      - ".github/workflows/**"
   pull_request:
     branches: [ "main" ]
     paths:
       - "python/**"
       - "scripts/**"
       - "test/**"
+      - ".github/workflows/**"
 jobs:
   unit-test-basic:
     runs-on: NpuTestRunner0
