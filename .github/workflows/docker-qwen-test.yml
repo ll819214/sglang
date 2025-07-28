@@ -39,6 +39,7 @@ jobs:
           -v /data/models/:/data/models/
           -v /etc/hccn.conf:/etc/hccn.conf
           -v /usr/local/sbin/npu-smi:/usr/local/sbin/npu-smi
+    steps:
       - name: dns avoid
         run: |
           cp /etc/hosts ./
