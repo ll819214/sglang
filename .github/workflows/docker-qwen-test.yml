@@ -22,7 +22,7 @@ jobs:
     container:
       image: swr.cn-southwest-2.myhuaweicloud.com/base_image/ascend-ci/cann:8.2.rc1.alpha003-910b-ubuntu22.04-py3.11
       options: |
-          --device=/dev/davinci0:/dev/davinci0 --device=/dev/davinci2:/dev/davinci2 --device=/dev/davinci3:/dev/davinci3  --device=/dev/davinci4:/dev/davinci4 --device=/dev/davinci5:/dev/davinci5 --device=/dev/davinci6:/dev/davinci6 --device=/dev/davinci7:/dev/davinci7 --device=/dev/davinci_manager --device=/dev/devmm_svm --device=/dev/hisi_hdc -v /usr/local/Ascend/driver/:/usr/local/Ascend/driver -v /etc/ascend_install.info:/etc/ascend_install.info -v /data/models/:/data/models/ -v /etc/hccn.conf:/etc/hccn.conf -v /usr/local/sbin/npu-smi:/usr/local/sbin/npu-smi
+              --device=/dev/davinci0:/dev/davinci0 --device=/dev/davinci2:/dev/davinci2 --device=/dev/davinci3:/dev/davinci3  --device=/dev/davinci4:/dev/davinci4 --device=/dev/davinci5:/dev/davinci5 --device=/dev/davinci6:/dev/davinci6 --device=/dev/davinci7:/dev/davinci7 --device=/dev/davinci_manager --device=/dev/devmm_svm --device=/dev/hisi_hdc -v /usr/local/Ascend/driver/:/usr/local/Ascend/driver -v /etc/ascend_install.info:/etc/ascend_install.info -v /data/models/:/data/models/ -v /etc/hccn.conf:/etc/hccn.conf -v /usr/local/sbin/npu-smi:/usr/local/sbin/npu-smi -v/home/l00623338/pkg:/home/l00623338/pkg
 
     steps:
       - name: dns avoid
@@ -78,11 +78,8 @@ jobs:
         run: |
           bash scripts/npu_ci_install_dependency.sh
           echo "npu_ci_install_dependency installed successfully"
-          wget https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/CANN/CANN%208.2.RC1/Ascend-cann-toolkit_8.2.RC1_linux-aarch64.run?response-content-type=application/octet-stream
-          wget https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/CANN/CANN%208.2.RC1/Ascend-cann-kernels-910b_8.2.RC1_linux-aarch64.run?response-content-type=application/octet-stream
-          chmod 777 ./*.run
-          ./Ascend-cann-toolkit_9.2.RC1*.run --install
-          ./Ascend-cann-kernels-*.run --install
+          bash /home/l00623338/Ascend-cann-toolkit_9.2.RC1*.run --install
+          bash /home/l00623338/Ascend-cann-kernels-*.run --install
           echo "pkg installed successfully"
       - name: Run test
         run: |
