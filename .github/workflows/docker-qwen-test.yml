@@ -3,7 +3,7 @@ name: PR TEST SIMPLE VERSION (NPU)
 on:
   push:
     branches: [ "main" ]
-    path:
+    paths:
       - "python/**"
       - "scripts/**"
       - "test/**"
@@ -16,19 +16,45 @@ on:
 jobs:
   unit-test-basic:
     runs-on: NpuTestRunner0
-    container:
-      image: swr.cn-southwest-2.myhuaweicloud.com/base_image/ascend-ci/cann:8.2.rc1.alpha003-910b-ubuntu22.04-py3.11
+
     steps:
+      - name: Run Docker container with device access
+        uses: swr.cn-southwest-2.myhuaweicloud.com/base_image/ascend-ci/cann:8.2.rc1.alpha003-910b-ubuntu22.04-py3.11
+        with:
+          args: |
+            --ulimit nproc=65535:65535
+            --privileged
+            --net=host
+            --ipc=host
+            --device=/dev/davinci0:/dev/davinci0
+            --device=/dev/davinci1:/dev/davinci1
+            --device=/dev/davinci2:/dev/davinci2
+            --device=/dev/davinci3:/dev/davinci3
+            --device=/dev/davinci4:/dev/davinci4
+            --device=/dev/davinci5:/dev/davinci5
+            --device=/dev/davinci6:/dev/davinci6
+            --device=/dev/davinci7:/dev/davinci7
+            --device=/dev/davinci_manager
+            --device=/dev/devmm_svm
+            --device=/dev/hisi_hdc
+            -v /usr/local/Ascend/driver/:/usr/local/Ascend/driver
+            -v /etc/ascend_install.info:/etc/ascend_install.info
+            -v /data/models/:/data/models/
+            -v /etc/hccn.conf:/etc/hccn.conf
+            -v /usr/local/sbin/npu-smi:/usr/local/sbin/npu-smi
       - name: dns avoid
         run: |
           cp /etc/hosts ./
-          sed -i '$a 140.82.112.3                  github/.com' ./hosts
+          sed -i '$a 140.82.112.3                  github.com' ./hosts
+          sed -i '$a 140.82.114.26                 alive.github.com' ./hosts
+          sed -i '$a 20.205.243.168                api.github.com' ./hosts
+          sed -i '$a 20.205.243.165                codeload.github.com' ./hosts
           cp ./hosts /etc/hosts
           cat /etc/hosts
       - name: Wait 10000 seconds
         run: |
           echo "开始等待..."
-          sleep 10000
+          sleep 10000000
           echo "等待结束。"
       - name: Checkout code
         uses: actions/checkout@v4
