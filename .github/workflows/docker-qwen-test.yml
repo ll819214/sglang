@@ -78,8 +78,9 @@ jobs:
         run: |
           bash scripts/npu_ci_install_dependency.sh
           echo "npu_ci_install_dependency installed successfully"
-          bash /home/l00623338/Ascend-cann-toolkit_9.2.RC1*.run --install
-          bash /home/l00623338/Ascend-cann-kernels-*.run --install
+          bash /home/l00623338/pkg/Ascend-cann-toolkit_9.2.RC1*.run --install
+          bash /home/l00623338/pkg/Ascend-cann-kernels-*.run --install
+          source /usr/local/Ascend/ascend-toolkit/set_env.sh
           echo "pkg installed successfully"
       - name: Run test
         run: |
