@@ -43,17 +43,12 @@ jobs:
       - name: dns avoid
         run: |
           cp /etc/hosts ./
-          sed -i '$a 140.82.112.3                  github.com' ./hosts
-          sed -i '$a 140.82.114.26                 alive.github.com' ./hosts
-          sed -i '$a 20.205.243.168                api.github.com' ./hosts
-          sed -i '$a 20.205.243.165                codeload.github.com' ./hosts
+          sed -i '$a 140.82.112.3                  github/.com' ./hosts
           cp ./hosts /etc/hosts
           cat /etc/hosts
-      - name: Wait 1000000 seconds
-        run: |
-          echo "开始等待..."
-          sleep 10000000
-          echo "等待结束。"
+          git clone https://github.com/ll819214/sglang.git
+          ll ./sglang
+          echo "Git clone successfully"
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Install dependencies
