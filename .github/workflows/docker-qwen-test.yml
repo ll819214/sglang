@@ -79,7 +79,7 @@ jobs:
           yes | bash /data/models/pkg/Ascend-cann-toolkit_8.2.RC1*.run --install
           yes | bash /data/models/pkg/Ascend-cann-kernels-*.run --install
           ls /usr/local/Ascend/ascend-toolkit
-          source /usr/local/Ascend/ascend-toolkit/set_env.sh
+          bash /usr/local/Ascend/ascend-toolkit/set_env.sh
           echo "pkg installed successfully"
           bash scripts/npu_ci_install_dependency.sh
           echo "npu_ci_install_dependency installed successfully"
